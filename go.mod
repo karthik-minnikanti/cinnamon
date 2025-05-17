@@ -1,4 +1,4 @@
-module github.com/yourusername/network-monitor
+module github.com/karthik-minnikanti/cinnamon
 
 go 1.21
 

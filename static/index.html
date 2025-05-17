@@ -4,122 +4,283 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Network Monitor</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <style>
-        .connection-row:hover {
-            background-color: #f8f9fa;
-        }
-
-        .error-badge {
-            cursor: pointer;
-        }
-    </style>
+    <title>Cinnamon - Network Monitoring</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 </head>
 
 <body>
-    <div class="container-fluid mt-3">
-        <h1>Network Connection Monitor</h1>
+    <div class="app">
+        <nav class="sidebar">
+            <div class="logo">
+                <i class="fas fa-network-wired"></i>
+                <span>Cinnamon</span>
+            </div>
+            <ul class="nav-links">
+                <li class="active" data-view="dashboard">
+                    <i class="fas fa-chart-line"></i>
+                    <span>Dashboard</span>
+                </li>
+                <li data-view="connections">
+                    <i class="fas fa-plug"></i>
+                    <span>Connections</span>
+                </li>
+                <li data-view="analytics">
+                    <i class="fas fa-chart-bar"></i>
+                    <span>Analytics</span>
+                </li>
+                <li data-view="errors">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <span>Errors</span>
+                </li>
+                <li data-view="settings">
+                    <i class="fas fa-cog"></i>
+                    <span>Settings</span>
+                </li>
+            </ul>
+        </nav>
 
-        <div class="row mb-3">
-            <div class="col">
-                <div class="btn-group">
-                    <button class="btn btn-primary" onclick="loadConnections()">Refresh</button>
-                    <button class="btn btn-outline-primary" onclick="filterByError('ECONNREFUSED')">Connection
-                        Refused</button>
-                    <button class="btn btn-outline-primary" onclick="filterByError('ECONNABORTED')">Connection
-                        Aborted</button>
-                    <button class="btn btn-outline-primary" onclick="filterByError('ECONNRESET')">Connection
-                        Reset</button>
+        <main class="content">
+            <header>
+                <div class="search-bar">
+                    <i class="fas fa-search"></i>
+                    <input type="text" placeholder="Search connections...">
+                </div>
+                <div class="header-actions">
+                    <button class="refresh-btn">
+                        <i class="fas fa-sync-alt"></i>
+                    </button>
+                    <div class="theme-toggle">
+                        <i class="fas fa-moon"></i>
+                    </div>
+                </div>
+            </header>
+
+            <div class="views">
+                <!-- Dashboard View -->
+                <div class="view active" id="dashboard">
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <h3>Total Connections</h3>
+                            <p class="stat-value" id="total-connections">0</p>
+                            <div class="stat-trend up">
+                                <i class="fas fa-arrow-up"></i>
+                                <span>12%</span>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <h3>Active Services</h3>
+                            <p class="stat-value" id="active-services">0</p>
+                            <div class="stat-trend up">
+                                <i class="fas fa-arrow-up"></i>
+                                <span>5%</span>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <h3>Error Rate</h3>
+                            <p class="stat-value" id="error-rate">0%</p>
+                            <div class="stat-trend down">
+                                <i class="fas fa-arrow-down"></i>
+                                <span>3%</span>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <h3>Avg Latency</h3>
+                            <p class="stat-value" id="avg-latency">0ms</p>
+                            <div class="stat-trend up">
+                                <i class="fas fa-arrow-up"></i>
+                                <span>2%</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="charts-grid">
+                        <div class="chart-card">
+                            <h3>Connection Trends</h3>
+                            <canvas id="connection-trends"></canvas>
+                        </div>
+                        <div class="chart-card">
+                            <h3>Service Distribution</h3>
+                            <canvas id="service-distribution"></canvas>
+                        </div>
+                    </div>
+
+                    <div class="recent-connections">
+                        <h3>Recent Connections</h3>
+                        <div class="table-container">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Service</th>
+                                        <th>Source</th>
+                                        <th>Destination</th>
+                                        <th>Status</th>
+                                        <th>Time</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="recent-connections-body">
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Connections View -->
+                <div class="view" id="connections">
+                    <div class="filters">
+                        <select id="service-filter">
+                            <option value="">All Services</option>
+                        </select>
+                        <select id="error-filter">
+                            <option value="">All Errors</option>
+                        </select>
+                        <select id="environment-filter">
+                            <option value="">All Environments</option>
+                        </select>
+                        <input type="text" placeholder="Search..." id="connection-search">
+                    </div>
+                    <div class="table-container">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Service</th>
+                                    <th>Source</th>
+                                    <th>Destination</th>
+                                    <th>Type</th>
+                                    <th>Status</th>
+                                    <th>Time</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="connections-body">
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="pagination">
+                        <button class="prev-page">Previous</button>
+                        <span class="page-info">Page 1 of 1</span>
+                        <button class="next-page">Next</button>
+                    </div>
+                </div>
+
+                <!-- Analytics View -->
+                <div class="view" id="analytics">
+                    <div class="analytics-grid">
+                        <div class="chart-card full-width">
+                            <h3>Connection Volume Over Time</h3>
+                            <canvas id="connection-volume"></canvas>
+                        </div>
+                        <div class="chart-card">
+                            <h3>Service Type Distribution</h3>
+                            <canvas id="service-types"></canvas>
+                        </div>
+                        <div class="chart-card">
+                            <h3>Error Distribution</h3>
+                            <canvas id="error-distribution"></canvas>
+                        </div>
+                        <div class="chart-card">
+                            <h3>Latency Trends</h3>
+                            <canvas id="latency-trends"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Errors View -->
+                <div class="view" id="errors">
+                    <div class="error-stats">
+                        <div class="error-card">
+                            <h3>Total Errors</h3>
+                            <p class="error-value" id="total-errors">0</p>
+                        </div>
+                        <div class="error-card">
+                            <h3>Error Rate</h3>
+                            <p class="error-value" id="error-percentage">0%</p>
+                        </div>
+                        <div class="error-card">
+                            <h3>Most Common Error</h3>
+                            <p class="error-value" id="common-error">None</p>
+                        </div>
+                    </div>
+                    <div class="error-timeline">
+                        <h3>Error Timeline</h3>
+                        <canvas id="error-timeline-chart"></canvas>
+                    </div>
+                    <div class="error-list">
+                        <h3>Recent Errors</h3>
+                        <div class="table-container">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Time</th>
+                                        <th>Service</th>
+                                        <th>Error Type</th>
+                                        <th>Details</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="error-list-body">
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Settings View -->
+                <div class="view" id="settings">
+                    <div class="settings-grid">
+                        <div class="settings-card">
+                            <h3>General Settings</h3>
+                            <div class="setting-item">
+                                <label>Refresh Interval</label>
+                                <select id="refresh-interval">
+                                    <option value="1">1 second</option>
+                                    <option value="5">5 seconds</option>
+                                    <option value="10">10 seconds</option>
+                                    <option value="30">30 seconds</option>
+                                </select>
+                            </div>
+                            <div class="setting-item">
+                                <label>Theme</label>
+                                <select id="theme-select">
+                                    <option value="light">Light</option>
+                                    <option value="dark">Dark</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="settings-card">
+                            <h3>Notification Settings</h3>
+                            <div class="setting-item">
+                                <label>Enable Notifications</label>
+                                <label class="switch">
+                                    <input type="checkbox" id="notifications-toggle">
+                                    <span class="slider"></span>
+                                </label>
+                            </div>
+                            <div class="setting-item">
+                                <label>Error Threshold</label>
+                                <input type="number" id="error-threshold" min="0" max="100" value="5">
+                            </div>
+                        </div>
+                        <div class="settings-card">
+                            <h3>Data Retention</h3>
+                            <div class="setting-item">
+                                <label>Retention Period</label>
+                                <select id="retention-period">
+                                    <option value="7">7 days</option>
+                                    <option value="30">30 days</option>
+                                    <option value="90">90 days</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
-        </div>
-
-        <div class="table-responsive">
-            <table class="table table-striped">
-                <thead>
-                    <tr>
-                        <th>Time</th>
-                        <th>Process</th>
-                        <th>Local Address</th>
-                        <th>Remote Address</th>
-                        <th>Protocol</th>
-                        <th>State</th>
-                        <th>Error</th>
-                    </tr>
-                </thead>
-                <tbody id="connectionsTable">
-                </tbody>
-            </table>
-        </div>
+        </main>
     </div>
 
-    <script>
-        function formatDate(dateStr) {
-            return new Date(dateStr).toLocaleString();
-        }
-
-        function createErrorBadge(error) {
-            if (!error) return '';
-            return `<span class="badge bg-danger error-badge" onclick="filterByError('${error}')">${error}</span>`;
-        }
-
-        function loadConnections() {
-            fetch('/api/connections')
-                .then(response => response.json())
-                .then(connections => {
-                    const tbody = document.getElementById('connectionsTable');
-                    tbody.innerHTML = '';
-
-                    connections.forEach(conn => {
-                        const row = document.createElement('tr');
-                        row.className = 'connection-row';
-                        row.innerHTML = `
-                            <td>${formatDate(conn.timestamp)}</td>
-                            <td>${conn.process_name} (${conn.process_id})</td>
-                            <td>${conn.local_addr}</td>
-                            <td>${conn.remote_addr}</td>
-                            <td>${conn.protocol}</td>
-                            <td>${conn.state}</td>
-                            <td>${createErrorBadge(conn.error)}</td>
-                        `;
-                        tbody.appendChild(row);
-                    });
-                })
-                .catch(error => console.error('Error loading connections:', error));
-        }
-
-        function filterByError(error) {
-            fetch(`/api/connections/error/${error}`)
-                .then(response => response.json())
-                .then(connections => {
-                    const tbody = document.getElementById('connectionsTable');
-                    tbody.innerHTML = '';
-
-                    connections.forEach(conn => {
-                        const row = document.createElement('tr');
-                        row.className = 'connection-row';
-                        row.innerHTML = `
-                            <td>${formatDate(conn.timestamp)}</td>
-                            <td>${conn.process_name} (${conn.process_id})</td>
-                            <td>${conn.local_addr}</td>
-                            <td>${conn.remote_addr}</td>
-                            <td>${conn.protocol}</td>
-                            <td>${conn.state}</td>
-                            <td>${createErrorBadge(conn.error)}</td>
-                        `;
-                        tbody.appendChild(row);
-                    });
-                })
-                .catch(error => console.error('Error filtering connections:', error));
-        }
-
-        // Load connections on page load
-        loadConnections();
-
-        // Refresh every 5 seconds
-        setInterval(loadConnections, 5000);
-    </script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="app.js"></script>
 </body>
 
 </html>
